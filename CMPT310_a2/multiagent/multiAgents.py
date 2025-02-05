@@ -75,7 +75,32 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+
+        # Calculate the distance of the closest food (similar to the food heuristic from assignment 1)
+
+        foodDistances = []
+        foodList = newFood.asList()
+
+        # If the next move leads to eating the last piece of food, always take it
+        if len(foodList) == 0:
+            return 9223372036854775807 # Max int value to ensure no other move can have a higher score
+        
+        for foodPos in foodList:
+            foodDistances.append(util.manhattanDistance(newPos, foodPos))
+
+        closestFoodDistance = min(foodDistances)
+
+        # Calculate the distance of the closest ghost
+
+        ghostDistances = []
+        for ghostState in newGhostStates:
+            ghostPos = ghostState.getPosition()
+            ghostDistances.append(util.manhattanDistance(newPos, ghostPos))
+
+        closestGhostDistance = min(ghostDistances)
+
+        # Added a term that prefers staying away from ghosts and staying close to food
+        return successorGameState.getScore() + closestGhostDistance / (2.0 * closestFoodDistance + 1.0)
 
 def scoreEvaluationFunction(currentGameState: GameState):
     """
