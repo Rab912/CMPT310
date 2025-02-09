@@ -83,7 +83,7 @@ class ReflexAgent(Agent):
 
         # If the next move leads to eating the last piece of food, always take it
         if len(foodList) == 0:
-            return 9223372036854775807 # Max int value to ensure no other move can have a higher score
+            return float('inf') # Ensures no other move can have a higher score
         
         for foodPos in foodList:
             foodDistances.append(util.manhattanDistance(newPos, foodPos))
@@ -161,7 +161,58 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        # Start with the maximizing agent (pacman)
+        return self.minimax(gameState, 0, 0)[0]
+
+    # Minimax algorithm which returns the optimal action and its associated value
+    def minimax(self, gameState: GameState, agentIndex: int, depth: int):
+        # Stop condition (Max depth reached, win/lose game, or terminal state)
+        if (depth == self.depth or gameState.isWin() or gameState.isLose() or
+            len(gameState.getLegalActions(agentIndex)) == 0):
+            return (Directions.STOP, self.evaluationFunction(gameState))
+
+        # Maximizing agent (pacman)
+        if agentIndex == 0:           
+            maxAction = Directions.STOP
+            maxValue = -float('inf')
+
+            for action in gameState.getLegalActions(agentIndex):
+                successor = gameState.generateSuccessor(agentIndex, action)
+                
+                # Loop through the agents in order of increasing index
+                nextAgentIndex = (agentIndex + 1) % gameState.getNumAgents()
+                nextDepth = depth
+
+                value = self.minimax(successor, nextAgentIndex, nextDepth)[1]
+
+                if value > maxValue:
+                    maxAction = action
+                    maxValue = value
+
+            return (maxAction, maxValue)
+
+        # Minimizing agent(s) (ghost)
+        else:            
+            minAction = Directions.STOP
+            minValue = float('inf')
+
+            for action in gameState.getLegalActions(agentIndex):
+                successor = gameState.generateSuccessor(agentIndex, action)
+                
+                # Loop through the agents in order of increasing index
+                nextAgentIndex = (agentIndex + 1) % gameState.getNumAgents()
+                # If the index has looped back around to 0, each agent has moved once in turn,
+                # so this is one search ply
+                nextDepth = depth + (1 if nextAgentIndex == 0 else 0)
+
+                value = self.minimax(successor, nextAgentIndex, nextDepth)[1]
+
+                if value < minValue:
+                    minAction = action
+                    minValue = value
+
+            return (minAction, minValue)
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
