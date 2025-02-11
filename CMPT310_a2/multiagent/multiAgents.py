@@ -76,31 +76,24 @@ class ReflexAgent(Agent):
 
         "*** YOUR CODE HERE ***"
 
-        # Calculate the distance of the closest food (similar to the food heuristic from assignment 1)
-
-        foodDistances = []
-        foodList = newFood.asList()
+        newFoodList = newFood.asList()
 
         # If the next move leads to eating the last piece of food, always take it
-        if len(foodList) == 0:
+        if len(newFoodList) == 0:
             return float('inf') # Ensures no other move can have a higher score
+
+        newGhostPositions = []
         
-        for foodPos in foodList:
-            foodDistances.append(util.manhattanDistance(newPos, foodPos))
-
-        closestFoodDistance = min(foodDistances)
-
-        # Calculate the distance of the closest ghost
-
-        ghostDistances = []
         for ghostState in newGhostStates:
-            ghostPos = ghostState.getPosition()
-            ghostDistances.append(util.manhattanDistance(newPos, ghostPos))
+            newGhostPositions.append(ghostState.getPosition())
 
-        closestGhostDistance = min(ghostDistances)
+        gameScore = successorGameState.getScore()
+        closestFoodDistance = min([util.manhattanDistance(newPos, foodPosition) for foodPosition in newFoodList])
+        closestGhostDistance = min([util.manhattanDistance(newPos, ghostPosition) for ghostPosition in newGhostPositions])
 
-        # Added a term that prefers staying away from ghosts and staying close to food
-        return successorGameState.getScore() + closestGhostDistance / (2.0 * closestFoodDistance + 1.0)
+        # Added a term that prefers to finish the game quickly, stays away from ghosts, and stays close to food
+        # This is not a linear combination of features, but is found to work very well for the test cases
+        return gameScore + closestGhostDistance / (2.0 * closestFoodDistance + 1.0)
 
 def scoreEvaluationFunction(currentGameState: GameState):
     """
@@ -358,7 +351,28 @@ def betterEvaluationFunction(currentGameState: GameState):
     DESCRIPTION: <write something here so we know what you did>
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    # Features: game score,
+    #           closest food distance,
+    #           closest ghost distance,
+    #           number of food pieces
+    #           number of power pellets
+
+    pacmanPosition = currentGameState.getPacmanPosition()
+    foodPositions = currentGameState.getFood().asList()
+    pelletPositions = currentGameState.getCapsules()
+    ghostPositions = currentGameState.getGhostPositions()
+
+    gameScore = currentGameState.getScore()
+    closestFoodDistance = min([util.manhattanDistance(pacmanPosition, foodPosition) for foodPosition in foodPositions] + [float('inf')])
+    closestGhostDistance = min([util.manhattanDistance(pacmanPosition, ghostPosition) for ghostPosition in ghostPositions] + [float('inf')])
+    foodCount = len(foodPositions)
+    pelletCount = len(pelletPositions)
+
+    features = [gameScore, 1.0 / (closestFoodDistance + 1), closestGhostDistance, foodCount, pelletCount]
+    weights = [200, 10, -10, -100, -100]
+
+    return sum([weight * feature for weight, feature in zip(weights, features)])
 
 # Abbreviation
 better = betterEvaluationFunction
