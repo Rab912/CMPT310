@@ -348,15 +348,50 @@ def betterEvaluationFunction(currentGameState: GameState):
     Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
     evaluation function (question 5).
 
-    DESCRIPTION: <write something here so we know what you did>
+    DESCRIPTION: 
+
+    This evaluation function makes pacman eat everything. He stays near
+    ghosts to eat them along with the food. It uses the following features:
+
+    -   the game score
+    -   the distance to the closest food piece
+    -   the distance to the closest ghost
+    -   the number of remaining food pieces
+    -   the number of remaining power pellets
+
+    The game's score is continually decreasing, always acting to reduce the
+    final score. A large positive weight is applied to this feature to
+    emphasize the importance of finishing the game quickly to keep the score
+    high.
+
+    The reciprocal of the distance to the closest food piece (plus a positive
+    value to ensure no division by zero) is taken as a feature because it
+    rewards being closer to the pellet. The main goal is to eat all the food
+    pieces, so this is given a high weight as well.
+
+    The distance to the closest ghost is something that should generally be
+    kept high, just to be safe, but since power pellets are being eaten it is
+    fine to hang around near ghosts to eat them. A small negative weight is
+    used to set the preference to being near ghosts, without making it too
+    important.
+
+    The number of remaining food pieces decreases with each piece of food
+    eaten, obviously, so a large negative weight is used to indicate that it
+    is important to eat the food.
+
+    The number of remaining power pellets is not as important as that for the
+    food pieces, but since this evaluation function prefers to hang around and
+    eat ghosts, a large negative weight is used to eat the pellets too.
+
+    For features to be minimized, it is possible to switch between positive
+    weights for reciprocal values and negative weights for non-reciprocal
+    values without changing the behavior too much. However, having the chosen
+    configuration gives the best results observed.
+
+    There is an interesting behavior with this function in that it sometimes
+    makes pacman juke the ghosts when they are in enclosed sections.
     """
     "*** YOUR CODE HERE ***"
-
-    # Features: game score,
-    #           closest food distance,
-    #           closest ghost distance,
-    #           number of food pieces
-    #           number of power pellets
 
     pacmanPosition = currentGameState.getPacmanPosition()
     foodPositions = currentGameState.getFood().asList()
@@ -370,7 +405,7 @@ def betterEvaluationFunction(currentGameState: GameState):
     pelletCount = len(pelletPositions)
 
     features = [gameScore, 1.0 / (closestFoodDistance + 1), closestGhostDistance, foodCount, pelletCount]
-    weights = [200, 10, -10, -100, -100]
+    weights =  [200, 100, -10, -100, -100]
 
     return sum([weight * feature for weight, feature in zip(weights, features)])
 
