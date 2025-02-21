@@ -59,9 +59,9 @@ class ValueIterationAgent(ValueEstimationAgent):
         self.values = util.Counter() # A Counter is a dict with default 0
         self.runValueIteration()
 
-    def getBestActionAndQValue(self, state):
+    def computeBestActionAndQValue(self, state):
         """
-        Calculates the action from a given state with the highest Q-value.
+        Calculates the action, from a given state, with the highest Q-value.
         
         Returns a tuple of (best action, associated Q-value).
 
@@ -95,7 +95,7 @@ class ValueIterationAgent(ValueEstimationAgent):
             for state in self.mdp.getStates():
                 # Update V_k(s) only if there are actions from this state
                 # Otherwise it will remain as 0 (its default)
-                valueK[state] = self.getBestActionAndQValue(state)[1]
+                valueK[state] = self.computeBestActionAndQValue(state)[1]
 
             # Update V_k+1(s) after each iteration
             self.values = valueK
@@ -134,7 +134,7 @@ class ValueIterationAgent(ValueEstimationAgent):
         """
         "*** YOUR CODE HERE ***"
         
-        return self.getBestActionAndQValue(state)[0]
+        return self.computeBestActionAndQValue(state)[0]
 
     def getPolicy(self, state):
         return self.computeActionFromValues(state)
