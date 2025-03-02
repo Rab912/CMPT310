@@ -146,7 +146,7 @@ class QLearningAgent(ReinforcementAgent):
         """
         "*** YOUR CODE HERE ***"
 
-        oldQValue = self.qValues[(state, action)]
+        oldQValue = self.getQValue(state, action)
         newSample = reward + self.discount * self.computeBestActionAndQValue(nextState)[1]
 
         self.qValues[(state, action)] = (1.0 - self.alpha) * oldQValue + self.alpha * newSample
@@ -242,4 +242,15 @@ class ApproximateQAgent(PacmanQAgent):
         if self.episodesSoFar == self.numTraining:
             # you might want to print your weights here for debugging
             "*** YOUR CODE HERE ***"
-            pass
+
+            features = self.weights.keys()
+
+            print("Game Results:")
+
+            for feature in features:
+                print("feature:")
+
+                for item in feature:
+                    print(item)
+                
+                print(f"weight: {self.weights[feature]}\n")

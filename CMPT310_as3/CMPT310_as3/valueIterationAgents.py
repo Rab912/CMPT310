@@ -61,11 +61,10 @@ class ValueIterationAgent(ValueEstimationAgent):
 
     def computeBestActionAndQValue(self, state):
         """
-        Calculates the action, from a given state, with the highest Q-value.
+        Calculates the action from a given state, with the highest Q-value.
         
-        Returns a tuple of (best action, associated Q-value).
-
-        If the state is terminal, i.e. it has no actions, then it returns (None, 0)
+        Returns a tuple of (best action, associated Q-value), or if the state is
+        terminal, i.e. it has no actions, it returns (None, 0).
         """
 
         bestAction = None
@@ -176,6 +175,24 @@ class AsynchronousValueIterationAgent(ValueIterationAgent):
     def runValueIteration(self):
         "*** YOUR CODE HERE ***"
 
+        states = self.mdp.getStates()
+
+        j = 0
+
+        # Update V_k+1(s) for state 0 when k = 0, state 1 when k = 1, ...,
+        # state n when k = n, and back to state 0 when k = n + 1
+        for k in range(self.iterations):
+            if j >= len(states):
+                j = 0
+
+            state = states[j]
+            j += 1
+
+            if self.mdp.isTerminal(state):
+                continue
+
+            self.values[state] = self.computeBestActionAndQValue(state)[1]
+
 class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
     """
         * Please read learningAgents.py before reading this.*
@@ -196,3 +213,44 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
     def runValueIteration(self):
         "*** YOUR CODE HERE ***"
 
+        # Predecessor map
+        predecessors = {}
+        for state in self.mdp.getStates():
+            predecessors[state] = [] # Configure the values as lists of predecessors
+
+        # Q-value difference priority queue
+        diffQueue = util.PriorityQueue()
+
+        # Compute predecessors of states, and fill the difference queue
+        for state in self.mdp.getStates():
+            for action in self.mdp.getPossibleActions(state):
+                for nextState, probability in self.mdp.getTransitionStatesAndProbs(state, action):
+                    # Fill in predecessor map avoiding duplicates
+                    if state not in predecessors[nextState]:
+                        predecessors[nextState].append(state)
+            
+            if self.mdp.isTerminal(state):
+                continue
+            
+            # Fill in difference queue for all non-terminal states
+            diff = abs(self.computeBestActionAndQValue(state)[1] - self.values[state])
+            diffQueue.update(state, -diff)
+
+        # Update state values
+        for k in range(self.iterations):
+            if diffQueue.isEmpty():
+                return
+            
+            state = diffQueue.pop()
+
+            if self.mdp.isTerminal(state):
+                continue
+
+            self.values[state] = self.computeBestActionAndQValue(state)[1]
+
+            # Fill in difference queue for all predecessors
+            for predecessor in predecessors[state]:
+                diff = abs(self.computeBestActionAndQValue(predecessor)[1] - self.values[predecessor])
+
+                if diff > self.theta:
+                    diffQueue.update(predecessor, -diff)
